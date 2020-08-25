@@ -1,3 +1,5 @@
+// Package persistance implements simple funcs for db access.
+// It also implements a sctruct that utilizes short and long URLs
 package persistance
 
 import (
@@ -10,7 +12,7 @@ const (
 	dbms   = "sqlite3"
 )
 
-type ShortLongURL struct {
+type shortLongURL struct {
 	gorm.Model
 	Short string
 	Long  string
@@ -19,7 +21,7 @@ type ShortLongURL struct {
 func init() {
 	db := getConnection()
 	defer db.Close()
-	db.AutoMigrate(&ShortLongURL{})
+	db.AutoMigrate(&shortLongURL{})
 }
 
 func getConnection() *gorm.DB {
@@ -30,33 +32,40 @@ func getConnection() *gorm.DB {
 	return db
 }
 
-func GetCounter() int64 {
+// Returns the ID of the most recent inserted URL
+// This ID equals counter + 1 from shortener package 
+func GetMostRecentUpdatedEntryID() int64 {
 	db := getConnection()
 	defer db.Close()
 
-	m := ShortLongURL{}
+	m := shortLongURL{}
 	db.Order("created_at desc").Last(&m)
 
 	return int64(m.ID)
 }
 
+// Creates short and long URL in DB if the short URL is not present
+// Updates long URL if short URL is present  
 func Save(s string, l string) {
 	db := getConnection()
 	defer db.Close()
 
-	u := ShortLongURL{}
+	u := shortLongURL{}
 	if db.First(&u, "short = ?", s); u.Short != "" {
 		u.Long = l
 		db.Save(&u)
 	}
-	db.Create(&ShortLongURL{Short: s, Long: l})
+	db.Create(&shortLongURL{Short: s, Long: l})
 }
 
+// Returns short URL if parIsLongUrl is true
+// Returns long URL if parIsLongUrl is false
+// Returns empty str if there is no such URL
 func GetURLFromDB(l string, parIsLongUrl bool) string {
 	db := getConnection()
 	defer db.Close()
 
-	var u ShortLongURL
+	var u shortLongURL
 	if parIsLongUrl {
 		db.First(&u, "long = ?", l)
 		return u.Short

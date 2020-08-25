@@ -5,7 +5,10 @@ import (
 	"time"
 )
 
-var mtx sync.Mutex
+var (
+	cachedURLs = make(map[string]longUrlEntry)
+	mtx sync.Mutex
+)
 
 func deleteURLEntryFunc(s string) func() {
 	return func() {

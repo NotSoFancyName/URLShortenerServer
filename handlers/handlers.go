@@ -1,3 +1,6 @@
+// Package handlers implements two handlers
+// First one provides form to enter long URL and handles provided short URLs 
+// Second one provides the short URL for previosly entered long one
 package handlers
 
 import (
@@ -13,6 +16,7 @@ import (
 )
 
 const (
+	//Form`s action name
 	ActionName   = "/shortened_url/"
 	textAreaName = "body"
 
@@ -40,17 +44,19 @@ var idxParams = struct {
 	textAreaName,
 }
 
-var cachedURLs = make(map[string]longUrlEntry)
-
-var _, base, _, _ = runtime.Caller(0)
-var templates = template.Must(template.ParseGlob(filepath.Join(
-	filepath.Dir(base),
-	tmplPath)))
+var ( 
+	_, base, _, _ = runtime.Caller(0)
+	templates = template.Must(template.ParseGlob(filepath.Join(
+		filepath.Dir(base),
+		tmplPath)))
+)
 
 func init() {
-	shortener.SetCounter(persistance.GetCounter())
+	shortener.SetCounter(persistance.GetMostRecentUpdatedEntryID())
 }
 
+// Serves a simple index.html with a form to enter a long URL
+// It also handles short URLs and redirects to their long counterparts  
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.Path) > 1 {
 		if elem, ok := cachedURLs[r.URL.Path[1:]]; ok {
@@ -68,6 +74,9 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Provides a short URL that corresponds the entered long one
+// First it tries to find short URL in cachedURLs, if it fails it makes a 
+// query to DB, if it fails again it creates a new one
 func ShortenedURLHandler(w http.ResponseWriter, r *http.Request) {
 	enteredURL := strings.TrimSpace(r.FormValue(textAreaName))
 	if enteredURL == "" || strings.Contains(enteredURL, r.Host) {

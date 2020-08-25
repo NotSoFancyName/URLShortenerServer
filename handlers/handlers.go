@@ -52,7 +52,7 @@ var (
 )
 
 func init() {
-	shortener.SetCounter(persistance.GetMostRecentUpdatedEntryID())
+	shortener.SetCounter(persistance.GetMostRecentUpdatedEntryID() + 1)
 }
 
 // Serves a simple index.html with a form to enter a long URL

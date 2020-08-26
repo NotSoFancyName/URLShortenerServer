@@ -1,5 +1,5 @@
 // Package handlers implements two handlers
-// First one provides form to enter long URL and handles provided short URLs 
+// First one provides form to enter long URL and handles provided short URLs
 // Second one provides the short URL for previosly entered long one
 package handlers
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NotSoFancyName/URLShortenerServer/persistance"
+	"github.com/NotSoFancyName/URLShortenerServer/persistence"
 	"github.com/NotSoFancyName/URLShortenerServer/shortener"
 )
 
@@ -20,7 +20,7 @@ const (
 	ActionName   = "/shortened_url/"
 	textAreaName = "body"
 
-	tmplPath = "./templates/*"
+	tmplPath    = "./templates/*"
 	idxTmplName = "index.html"
 	empTmplName = "empty.html"
 	urlTmplName = "shortenedurl.html"
@@ -44,26 +44,26 @@ var idxParams = struct {
 	textAreaName,
 }
 
-var ( 
+var (
 	_, base, _, _ = runtime.Caller(0)
-	templates = template.Must(template.ParseGlob(filepath.Join(
+	templates     = template.Must(template.ParseGlob(filepath.Join(
 		filepath.Dir(base),
 		tmplPath)))
 )
 
 func init() {
-	shortener.SetCounter(persistance.GetMostRecentUpdatedEntryID() + 1)
+	shortener.SetCounter(persistence.GetMostRecentUpdatedEntryID() + 1)
 }
 
 // Serves a simple index.html with a form to enter a long URL
-// It also handles short URLs and redirects to their long counterparts  
+// It also handles short URLs and redirects to their long counterparts
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.Path) > 1 {
 		if elem, ok := cachedURLs[r.URL.Path[1:]]; ok {
 			postponeURLEntryDeletion(&elem, r.URL.Path[1:])
 			http.Redirect(w, r, elem.longUrl, http.StatusFound)
 		} else {
-			if url := persistance.GetURLFromDB(r.URL.Path[1:], false); url == "" {
+			if url := persistence.GetURLFromDB(r.URL.Path[1:], false); url == "" {
 				http.NotFound(w, r)
 			} else {
 				http.Redirect(w, r, url, http.StatusFound)
@@ -75,7 +75,7 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Provides a short URL that corresponds the entered long one
-// First it tries to find short URL in cachedURLs, if it fails it makes a 
+// First it tries to find short URL in cachedURLs, if it fails it makes a
 // query to DB, if it fails again it creates a new one
 func ShortenedURLHandler(w http.ResponseWriter, r *http.Request) {
 	enteredURL := strings.TrimSpace(r.FormValue(textAreaName))
@@ -87,7 +87,7 @@ func ShortenedURLHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := getCachedShortURL(enteredURL)
 
 	if shortURL == "" {
-		shortURL = persistance.GetURLFromDB(enteredURL, true)
+		shortURL = persistence.GetURLFromDB(enteredURL, true)
 		if shortURL != "" {
 			cachedURLs[shortURL] = longUrlEntry{
 				enteredURL,
@@ -100,7 +100,7 @@ func ShortenedURLHandler(w http.ResponseWriter, r *http.Request) {
 		cachedURLs[shortURL] = longUrlEntry{
 			enteredURL,
 			time.AfterFunc(oneWeek, deleteURLEntryFunc(shortURL))}
-		persistance.Save(shortURL, enteredURL)
+		persistence.Save(shortURL, enteredURL)
 	}
 
 	templates.ExecuteTemplate(w, urlTmplName, struct {

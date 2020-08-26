@@ -7,7 +7,7 @@ import (
 
 var (
 	cachedURLs = make(map[string]longUrlEntry)
-	mtx sync.Mutex
+	mtx        sync.Mutex
 )
 
 func deleteURLEntryFunc(s string) func() {

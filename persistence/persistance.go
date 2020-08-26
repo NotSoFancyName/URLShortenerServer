@@ -1,6 +1,6 @@
-// Package persistance implements simple funcs for db access.
+// Package persistence implements simple funcs for db access.
 // It also implements a sctruct that utilizes short and long URLs
-package persistance
+package persistence
 
 import (
 	"github.com/jinzhu/gorm"
@@ -33,7 +33,7 @@ func getConnection() *gorm.DB {
 }
 
 // Returns the ID of the most recent inserted URL
-// This ID equals counter + 1 from shortener package 
+// This ID equals counter + 1 from shortener package
 func GetMostRecentUpdatedEntryID() int64 {
 	db := getConnection()
 	defer db.Close()
@@ -45,7 +45,7 @@ func GetMostRecentUpdatedEntryID() int64 {
 }
 
 // Creates short and long URL in DB if the short URL is not present
-// Updates long URL if short URL is present  
+// Updates long URL if short URL is present
 func Save(s string, l string) {
 	db := getConnection()
 	defer db.Close()

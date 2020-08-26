@@ -1,21 +1,21 @@
 package handlers
 
 import (
-	"fmt"
 	"bytes"
-	"strings"
-	"path/filepath"
+	"fmt"
+	"html/template"
 	"io/ioutil"
-	"net/url"
 	"net/http"
 	"net/http/httptest"
-	"html/template"
+	"net/url"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
 const (
-	indexPath   = "./templates/index.html"
-	testUrl = "UnexistingLink"
+	indexPath = "./templates/index.html"
+	testUrl   = "UnexistingLink"
 )
 
 func TestDefaultHandler(t *testing.T) {
@@ -58,10 +58,10 @@ func TestDefaultHandler(t *testing.T) {
 func TestShortenedURLHandler(t *testing.T) {
 	f := url.Values{}
 	f.Set(textAreaName, testUrl)
-	req, err := http.NewRequest("POST", "http://localhost:8080" + ActionName, 
+	req, err := http.NewRequest("POST", "http://localhost:8080"+ActionName,
 		strings.NewReader(f.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,6 @@ func TestShortenedURLHandler(t *testing.T) {
 
 	resp := w.Result()
 	body, _ := ioutil.ReadAll(resp.Body)
-
 
 	if !strings.Contains(string(body), req.Host) {
 		t.Errorf("Invalid host %v expected %v",

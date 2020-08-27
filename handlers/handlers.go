@@ -89,18 +89,22 @@ func ShortenedURLHandler(w http.ResponseWriter, r *http.Request) {
 	if shortURL == "" {
 		shortURL = persistence.GetURLFromDB(enteredURL, true)
 		if shortURL != "" {
+			mtx.Lock()
 			cachedURLs[shortURL] = longUrlEntry{
 				enteredURL,
 				time.AfterFunc(oneWeek, deleteURLEntryFunc(shortURL))}
+			mtx.Unlock()
 		}
 	}
 
 	if shortURL == "" {
+		mtx.Lock()
 		shortURL = shortener.ShortURLString()
 		cachedURLs[shortURL] = longUrlEntry{
 			enteredURL,
 			time.AfterFunc(oneWeek, deleteURLEntryFunc(shortURL))}
 		persistence.Save(shortURL, enteredURL)
+		mtx.Unlock()
 	}
 
 	templates.ExecuteTemplate(w, urlTmplName, struct {
